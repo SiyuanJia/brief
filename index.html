@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>财经时事资讯简报 - 2025年9月5日</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
+    <script src="config.js"></script>
+</head>
+<body>
+    <div id="report-container">
+        <div class="header">
+            <h1 class="main-title">财经时事资讯简报</h1>
+            <div class="date-container">
+                <span id="display-date" class="date">2025年9月5日</span>
+                <button id="edit-date-btn" class="edit-date-btn" title="修改日期">📅</button>
+                <input type="date" id="date-picker" class="date-picker hidden" value="2025-09-05">
+            </div>
+            <div class="nav">
+                <a href="#market">美股市场</a>
+                <a href="#employment">非农数据</a>
+                <a href="#commodities">油价金价</a>
+                <a href="#tech">科技股动态</a>
+            </div>
+        </div>
+
+        <section id="market" class="section">
+            <h2 class="section-title">
+                <span class="section-title-text">【今日市场】美股三大股指小幅收跌</span>
+            </h2>
+            <div class="content">
+                <p>美东时间9月5日（周五），美国三大股指小幅收跌，<span class="highlight highlight-blue">非农数据强化了市场对于9月降息的押注</span>，同时引发了市场对美国经济的担忧。WTI跌至5月以来最低，金价再创新高。</p>
+                <div class="key-point">
+                    <p>本周，道指跌0.32%，标普500指数涨0.33%，纳指涨1.14%。</p>
+                </div>
+            </div>
+            <div class="image-container">
+                <img src="https://assets-persist.lovart.ai/agent_images/a88df809-78df-4fcf-a335-ccd40254f6ad.png" alt="美股市场走势图表">
+            </div>
+        </section>
+
+        <section id="employment" class="section">
+            <h2 class="section-title">
+                <span class="section-title-text">非农数据引发衰退担忧</span>
+            </h2>
+            <div class="content">
+                <p>经济数据面，美国劳工统计局周五盘前报告称，<span class="highlight highlight-red">8月非农就业人数增加2.2万，低于预期</span>，进一步表明招聘放缓。接受道琼斯调查的经济学家平均预估8月非农就业人数将增加7.5万人，失业率微升至4.3%。</p>
+                <p>美国8月份的就业增长显著放缓，<span class="highlight highlight-yellow">失业率攀升至自2021年以来的最高点</span>，这引发了人们对劳动力市场可能正面临更严重衰退的担忧。</p>
+                <div class="key-point">
+                    <p>根据芝商所的"Fedwatch"工具，<span class="highlight highlight-green">美联储在9月份保持利率不变的概率为0，降息25个基点的概率为88.3%，而降息50个基点的概率为11.7%</span>。</p>
+                </div>
+                <p>"美联储传声筒"Nick Timiraos表示，美国今年夏天就业增长急剧放缓，很可能使美联储在两周后的会议上决定降息25个基点。</p>
+            </div>
+            <div class="image-container">
+                <img src="https://assets-persist.lovart.ai/agent_images/3de1bc9d-821e-4aeb-ac15-56f2954bc6da.png" alt="非农就业数据图表">
+            </div>
+        </section>
+
+        <section id="commodities" class="section">
+            <h2 class="section-title">
+                <span class="section-title-text">WTI跌至5月以来最低，金价再创新高</span>
+            </h2>
+            <div class="content">
+                <p><span class="highlight highlight-red">油价跌至5月以来最低</span>，10月交割的WTI原油期货下跌2.5%，收于每桶62美元下方，本周下跌3.3%。11月交割的布伦特原油期货下跌2.2%，收于每桶65.50美元。</p>
+                <p>本周末，OPEC+计划召开会议。据知情人士透露，沙特阿拉伯正寻求进一步增加石油产量，以期通过提升供应量来缓解油价下跌的压力。</p>
+                <p>"原油市场情绪不佳，"道明证券大宗商品策略师Daniel Ghali表示，"在即将召开的OPEC+会议前，油价走势仍然不对称地偏向下行，而且预计圭亚那和巴西的供应量即将增加，我们仍然战术性看跌原油。"</p>
+                <p><span class="highlight highlight-yellow">金价一度飙升1.5%，突破每盎司3600美元大关，创下历史新高</span>，延续本周由降息押注升温推动的涨势。截至纽约时间下午5点，黄金现货报3586.69美元/盎司。</p>
+            </div>
+            <div class="image-container">
+                <img src="https://assets-persist.lovart.ai/agent_images/03880167-9b31-446e-9fdb-695885964016.png" alt="油价和金价走势图表">
+            </div>
+        </section>
+
+        <section id="tech" class="section">
+            <h2 class="section-title">
+                <span class="section-title-text">大型科技股多数下跌</span>
+            </h2>
+            <div class="content">
+                <p>大型科技股多数下跌，微软跌逾2%，亚马逊跌超1%，苹果跌0.04%，脸书涨0.51%，谷歌涨逾1%，特斯拉涨超3%。</p>
+                <p>综合自万得，周五，<span class="highlight highlight-blue">谷歌的母公司Alphabet因旗下高利润的广告技术（adtech）业务涉嫌反竞争行为，遭到欧盟开出29.5亿欧元（约合34.5亿美元）的反垄断罚款</span>。这是过去十年间，谷歌在与欧盟竞争监管机构的长期博弈中，第四次收到罚单。</p>
+                <div class="key-point">
+                    <p><span class="highlight highlight-green">特斯拉表示，对2025年首席执行官绩效奖励的初步公允价值估计为877.5亿美元；马斯克的目标包括交付2000万辆特斯拉汽车、投入100万辆无人驾驶出租车商业运营</span>；目标还包括实现1000万份全自动驾驶（FSD）活跃订阅，交付100万台机器人。</p>
+                </div>
+                <p>OpenAI与博通共同设计的人工智能芯片预计明年上市。博通高管表示，公司预计2026财年AI业务的前景将显著改善；积压订单总额达到创纪录的逾1100亿美元；来自新客户的100亿美元订单交付时间可能在2026财年第三季度。</p>
+            </div>
+            <div class="image-container">
+                <img src="https://assets-persist.lovart.ai/agent_images/a2b07c78-ec6c-4c72-9932-2dcb29edc6bb.png" alt="科技股动态图表">
+            </div>
+        </section>
+
+        <!-- 底部二维码区域 -->
+        <div id="qr-section" class="qr-section hidden">
+            <div class="qr-divider"></div>
+            <div class="qr-content">
+                <div class="qr-code-container">
+                    <canvas id="qr-canvas" class="qr-canvas"></canvas>
+                </div>
+                <div class="qr-text">
+                    <div class="qr-prompt">微信扫一扫，立即阅读原文</div>
+                    <div class="qr-brand">
+                        <span class="brand-tag">AIGC好语知时节</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 输入链接按钮 -->
+    <button id="generate-btn" class="generate-btn" title="输入链接">🔗 输入链接</button>
+
+    <!-- 下载按钮 -->
+    <button class="download-btn" onclick="downloadImage()" title="下载长图">📥</button>
+
+    <!-- 输入弹窗 -->
+    <div id="input-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">生成时事资讯简报</h3>
+                <p class="modal-description">请输入新闻链接，系统将自动爬取内容并生成专业的简报</p>
+            </div>
+
+            <div class="input-group">
+                <label for="news-url" class="input-label">新闻链接</label>
+                <input type="url" id="news-url" class="input-field" placeholder="https://example.com/news-article" />
+            </div>
+
+            <!-- 示例文章区域 -->
+            <div class="examples-section">
+                <h4 class="examples-title">📰 示例文章</h4>
+                <div id="example-articles" class="example-articles">
+                    <!-- 示例文章将通过 JavaScript 动态生成 -->
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="cancel-btn" class="btn btn-secondary">取消</button>
+                <button id="confirm-btn" class="btn btn-primary">生成简报</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载状态 -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <h3 id="loading-title" class="loading-title">正在处理...</h3>
+            <p id="loading-description" class="loading-description">请稍候</p>
+
+            <!-- 详细进度展示 -->
+            <div class="progress-details">
+                <div id="step-indicators" class="step-indicators">
+                    <div class="step-item" data-step="1">
+                        <div class="step-icon">🔗</div>
+                        <div class="step-text">获取内容</div>
+                    </div>
+                    <div class="step-item" data-step="2">
+                        <div class="step-icon">🤖</div>
+                        <div class="step-text">AI分析</div>
+                    </div>
+                    <div class="step-item" data-step="3">
+                        <div class="step-icon">🎨</div>
+                        <div class="step-text">生成插图</div>
+                    </div>
+                    <div class="step-item" data-step="4">
+                        <div class="step-icon">📄</div>
+                        <div class="step-text">渲染简报</div>
+                    </div>
+                </div>
+
+                <div id="current-activity" class="current-activity">
+                    <div class="activity-text">准备开始...</div>
+                    <div class="activity-details"></div>
+                </div>
+            </div>
+
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill"></div>
+            </div>
+            <p id="progress-text" class="progress-text">0%</p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
