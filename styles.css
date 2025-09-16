@@ -77,6 +77,7 @@ body {
     padding: 4px 8px;
     border-radius: 4px;
     transition: background-color 0.2s;
+    white-space: nowrap; /* 防止日期换行 */
 }
 
 .date:hover {
@@ -702,6 +703,8 @@ body {
     box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
     position: relative;
     overflow: hidden;
+    white-space: nowrap; /* 防止品牌标签换行 */
+    display: inline-block; /* 确保标签不会被强制换行 */
 }
 
 .brand-tag::before {
@@ -774,6 +777,7 @@ body {
 
     .date {
         font-size: 0.9rem;
+        white-space: nowrap; /* 移动端也防止日期换行 */
     }
 
     .edit-date-btn {
@@ -822,6 +826,7 @@ body {
         padding: 3px 8px;
         border-radius: 12px;
         font-size: 0.75rem;
+        white-space: nowrap; /* 移动端也防止换行 */
     }
 
 
