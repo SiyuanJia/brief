@@ -835,6 +835,8 @@ function createSectionElement(sectionData, index) {
         imageContainer.className = 'image-container';
 
         const img = new Image();
+        // 尽可能启用跨域图片加载，便于后续截图（需要目标服务器允许 CORS）
+        img.crossOrigin = 'anonymous';
         console.log('[Images] 准备加载:', sectionData.imageUrl);
         img.decoding = 'async';
         img.loading = 'eager';
@@ -1044,47 +1046,46 @@ function downloadImage() {
     });
 
     // 移动端使用更保守的设置
-    const options = {
-        quality: isMobile ? 0.8 : 1.0, // 移动端降低质量
+    const options = isMobile ? {
+        quality: 0.7,
+        width: Math.min(actualWidth, 1000),
+        height: actualHeight,
+        bgcolor: '#f5f2e8',
+        pixelRatio: 1,
+        cacheBust: true,
+        imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+        filter: function(node) {
+            try {
+                // 跳过含有跨域背景图的元素
+                const cs = node.nodeType === 1 ? window.getComputedStyle(node) : null;
+                if (cs && cs.backgroundImage && /url\(/.test(cs.backgroundImage) && /^url\((?!['"]?data:)/.test(cs.backgroundImage)) return false;
+                // 跳过跨域 <img>
+                if (node.tagName === 'IMG') {
+                    const src = node.getAttribute('src') || '';
+                    if (src && !/^data:|^blob:|^\//.test(src) && !src.includes(window.location.host)) return false;
+                }
+            } catch(e) {}
+            return true;
+        }
+    } : {
+        quality: 1.0,
         width: actualWidth,
         height: actualHeight,
         style: {
             margin: '0',
             padding: computedStyle.padding,
-            boxSizing: 'border-box',
-            transform: 'scale(1)', // 确保缩放正常
-            transformOrigin: 'top left'
+            boxSizing: 'border-box'
         },
-        bgcolor: '#f5f2e8',
-        // 移动端添加额外配置
-        ...(isMobile && {
-            pixelRatio: Math.min(window.devicePixelRatio || 1, 2), // 限制像素比
-            cacheBust: true, // 避免缓存问题
-            imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==' // 1x1透明图片占位
-        })
+        bgcolor: '#f5f2e8'
     };
 
     // 添加超时处理
     const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('下载超时')), isMobile ? 15000 : 30000);
+        setTimeout(() => reject(new Error('下载超时')), isMobile ? 12000 : 30000);
     });
 
-    // 选择合适的图片生成库
-    const generateImagePromise = isMobile && typeof html2canvas !== 'undefined'
-        ? html2canvas(node, {
-            backgroundColor: '#f5f2e8',
-            scale: Math.min(window.devicePixelRatio || 1, 2),
-            useCORS: true,
-            allowTaint: true,
-            width: actualWidth,
-            height: actualHeight,
-            scrollX: 0,
-            scrollY: 0
-          }).then(canvas => canvas.toDataURL('image/png', 0.8))
-        : domtoimage.toPng(node, options);
-
     Promise.race([
-        generateImagePromise,
+        domtoimage.toPng(node, options),
         timeoutPromise
     ])
         .then(function (dataUrl) {
