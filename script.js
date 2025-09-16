@@ -1292,6 +1292,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// ==================== 移动端调试工具 ====================
+// 移动端加载 Eruda 调试工具
+(function() {
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobile && window.location.search.includes('debug=1')) {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/eruda@3.0.1/eruda.min.js';
+        script.onload = function() {
+            eruda.init();
+            console.log('移动端调试工具已启用');
+        };
+        document.head.appendChild(script);
+    }
+})();
+
 // ==================== 统一代理适配（运行时配置） ====================
 // 页面加载完成后，根据环境自动配置API端点
 (function() {
