@@ -1034,6 +1034,9 @@ function downloadImage() {
     const computedStyle = window.getComputedStyle(node);
     const actualWidth = node.scrollWidth;
     const actualHeight = node.scrollHeight;
+    // 移动端限制导出高度，避免超大画布导致失败（如部分内核的 4096/8192 限制）
+    const maxExportHeight = 2200;
+    const scale = isMobile ? Math.min(1, maxExportHeight / Math.max(1, actualHeight)) : 1;
 
     console.log('容器尺寸:', {
         scrollWidth: actualWidth,
@@ -1048,12 +1051,18 @@ function downloadImage() {
     // 移动端使用更保守的设置
     const options = isMobile ? {
         quality: 0.7,
-        width: Math.min(actualWidth, 1000),
-        height: actualHeight,
+        width: Math.round(actualWidth * scale),
+        height: Math.round(actualHeight * scale),
         bgcolor: '#f5f2e8',
         pixelRatio: 1,
         cacheBust: true,
         imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+        style: {
+            margin: '0',
+            boxSizing: 'border-box',
+            transform: `scale(${scale})`,
+            transformOrigin: 'top left'
+        },
         filter: function(node) {
             try {
                 // 跳过含有跨域背景图的元素
@@ -1162,6 +1171,60 @@ function downloadImage() {
                 }
             } catch (fallbackErr) {
                 console.error('[fallback] html-to-image 也失败:', fallbackErr);
+                try {
+                    console.log('[fallback2] 使用 html2canvas 重试...');
+                    await new Promise((resolve, reject) => {
+                        if (window.html2canvas) return resolve();
+                        const s = document.createElement('script');
+                        s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+                        s.onload = () => resolve();
+                        s.onerror = (e) => reject(e);
+                        document.head.appendChild(s);
+                    });
+
+                    const prevTransform = node.style.transform;
+                    const prevOrigin = node.style.transformOrigin;
+                    if (isMobile && scale < 1) {
+                        node.style.transform = `scale(${scale})`;
+                        node.style.transformOrigin = 'top left';
+                    }
+
+                    const canvas = await window.html2canvas(node, {
+                        backgroundColor: '#f5f2e8',
+                        scale: 1,
+                        useCORS: true,
+                        allowTaint: true,
+                        width: Math.round(actualWidth * (isMobile ? scale : 1)),
+                        height: Math.round(actualHeight * (isMobile ? scale : 1)),
+                        scrollX: 0,
+                        scrollY: 0
+                    });
+
+                    node.style.transform = prevTransform;
+                    node.style.transformOrigin = prevOrigin;
+
+                    const dataUrl = canvas.toDataURL('image/png', isMobile ? 0.7 : 0.92);
+
+                    const loadingDiv = document.getElementById('download-loading');
+                    if (loadingDiv) loadingDiv.remove();
+
+                    if (isMobile) {
+                        const w = window.open('', '_blank');
+                        if (w) {
+                            w.document.write(`<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><title>财经简报</title></head><body style="margin:0;padding:20px;text-align:center;background:#f0f0f0"><div style="background:#fff;padding:12px;border-radius:8px;margin-bottom:12px;">长按下方图片保存到相册</div><img src="${dataUrl}" style="max-width:100%;height:auto;border-radius:8px;" alt="财经简报"/></body></html>`);
+                            w.document.close();
+                            return;
+                        }
+                    } else {
+                        const link = document.createElement('a');
+                        link.download = '财经时事资讯简报-' + new Date().toISOString().slice(0, 10) + '.png';
+                        link.href = dataUrl;
+                        link.click();
+                        return;
+                    }
+                } catch (fb2Err) {
+                    console.error('[fallback2] html2canvas 也失败:', fb2Err);
+                }
             }
 
             if (isMobile) {
