@@ -1123,8 +1123,46 @@ function downloadImage() {
                 link.click();
             }
         })
-        .catch(function (error) {
+        .catch(async function (error) {
             console.error('下载图片时出错:', error);
+
+            // 尝试兜底方案：html-to-image（按需动态加载，不引入 html2canvas）
+            try {
+                console.log('[fallback] 使用 html-to-image 重试...');
+                const { toPng } = await import('https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/+esm');
+                const htiOptions = {
+                    backgroundColor: '#f5f2e8',
+                    pixelRatio: isMobile ? 1 : (window.devicePixelRatio || 1),
+                    cacheBust: true,
+                    imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+                    filter: (options && options.filter) ? options.filter : undefined,
+                    width: options.width,
+                    height: options.height,
+                    style: options.style
+                };
+                const dataUrl = await toPng(node, htiOptions);
+
+                const loadingDiv = document.getElementById('download-loading');
+                if (loadingDiv) loadingDiv.remove();
+
+                if (isMobile) {
+                    // 新窗口展示，长按保存
+                    const w = window.open('', '_blank');
+                    if (w) {
+                        w.document.write(`<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><title>财经简报</title></head><body style="margin:0;padding:20px;text-align:center;background:#f0f0f0"><div style="background:#fff;padding:12px;border-radius:8px;margin-bottom:12px;">长按下方图片保存到相册</div><img src="${dataUrl}" style="max-width:100%;height:auto;border-radius:8px;" alt="财经简报"/></body></html>`);
+                        w.document.close();
+                        return;
+                    }
+                } else {
+                    const link = document.createElement('a');
+                    link.download = '财经时事资讯简报-' + new Date().toISOString().slice(0, 10) + '.png';
+                    link.href = dataUrl;
+                    link.click();
+                    return;
+                }
+            } catch (fallbackErr) {
+                console.error('[fallback] html-to-image 也失败:', fallbackErr);
+            }
 
             if (isMobile) {
                 alert('移动端图片生成失败，建议：\n1. 尝试刷新页面后重试\n2. 使用桌面浏览器访问\n3. 截屏保存页面内容');
