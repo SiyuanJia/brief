@@ -948,7 +948,7 @@ function processTextWithHighlights(text, highlights) {
         let localCount = 0;
         let replacedAny = false;
         processed = processed.replace(regex, (match) => {
-            if (localCount >= 8) return match; // 每条高亮最多替换 8 处
+            if (localCount >= 2) return match; // 控制每条高亮最多替换 2 处，避免碎片化
             const token = `@@H${idx}_${tokenSeq++}@@`;
             mappings.push({ token, replacement: `<span class="${cls}">${match}</span>` });
             localCount++;
@@ -965,49 +965,43 @@ function processTextWithHighlights(text, highlights) {
 
         const cls = `highlight highlight-${h.type || 'red'}`;
 
-        // 1) 首选：近乎精确匹配（仅放宽空白差异）
-        const strictPattern = escapeRegExp(clean).replace(/\s+/g, '\\s*');
-        let matched = tryReplaceWithRegex(strictPattern, cls, idx);
+        // A) 先做“整句相似”匹配：尽量高亮完整句子
+        let matched = false;
+        {
+            const candidates = basePlainForSim
+                .split(/[。！？!?；;：:\n]+/)
+                .map(s => s.trim())
+                .filter(Boolean);
+            let best = { score: 0, sent: null };
+            for (const sent of candidates) {
+                const score = similarityRatio(sent, clean);
+                if (score > best.score) best = { score, sent };
+                if (best.score >= 0.995) break; // 极高相似度，提前结束
+            }
+            const dynamicThreshold = clean.length >= 12 ? 0.85 : 0.80;
+            if (best.sent && best.score >= dynamicThreshold) {
+                const candPattern = escapeRegExp(best.sent).replace(/\s+/g, '\\s*');
+                matched = tryReplaceWithRegex(candPattern, cls, idx) || matched;
+            }
+        }
 
-        // 2) 兜底：如果严格匹配不到，则按中文逗号/顿号/句号等切片，
-        //    选取最长片段(长度>=4)进行匹配，提升容错（应对同义改写、插词等）
+        // B) 若整句匹配不成功，尝试严格匹配（仅放宽空白差异）
         if (!matched) {
+            const strictPattern = escapeRegExp(clean).replace(/\s+/g, '\\s*');
+            matched = tryReplaceWithRegex(strictPattern, cls, idx);
+        }
+
+        // C) 最后兜底：仅当文本较长时才做片段匹配，避免碎片化
+        if (!matched && clean.length >= 14) {
             const fragments = clean
                 .split(/[，。,\.；;：:、\s\-——\(\)\[\]“”"‘’]+/)
                 .map(s => s.trim())
                 .filter(Boolean)
                 .sort((a, b) => b.length - a.length);
-
             for (const frag of fragments) {
-                if (frag.length < 4) break; // 过短片段不高亮，避免噪声
+                if (frag.length < 6) break; // 更高门槛，减少碎片化
                 const fragPattern = escapeRegExp(frag).replace(/\s+/g, '\\s*');
-                if (tryReplaceWithRegex(fragPattern, cls, idx)) {
-                    matched = true;
-                    break;
-                }
-            }
-        }
-
-        // 3) 相似度兜底：在全文候选句中寻找与 highlight 最相近的句子，
-        //    若相似度 >= 0.95，则视为匹配成功并高亮该候选句
-        if (!matched) {
-            const targetNorm = normalizeForSimilarity(clean);
-            if (targetNorm.length >= 6) { // 太短的文本相似度不稳定，避免误报
-                const candidates = basePlainForSim
-                    .split(/[。！？!?；;：:\n]+/)
-                    .map(s => s.trim())
-                    .filter(Boolean)
-                    .sort((a, b) => b.length - a.length); // 先长后短，提升命中稳定性
-                let best = { score: 0, sent: null };
-                for (const sent of candidates) {
-                    const score = similarityRatio(sent, clean);
-                    if (score > best.score) best = { score, sent };
-                    if (best.score >= 0.995) break; // 极高相似度，提前结束
-                }
-                if (best.sent && best.score >= 0.95) {
-                    const candPattern = escapeRegExp(best.sent).replace(/\s+/g, '\\s*');
-                    matched = tryReplaceWithRegex(candPattern, cls, idx) || matched;
-                }
+                if (tryReplaceWithRegex(fragPattern, cls, idx)) { matched = true; break; }
             }
         }
     });
