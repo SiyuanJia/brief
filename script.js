@@ -943,12 +943,16 @@ function processTextWithHighlights(text, highlights) {
     const mappings = [];
     let tokenSeq = 0;
 
-    const tryReplaceWithRegex = (pattern, cls, idx) => {
-        const regex = new RegExp(pattern, 'g');
+    const tryReplaceWithRegex = (pattern, cls, idx, wrapSentence = true) => {
+        // 优先将匹配扩展为“整句”边界，避免碎片化；必要时可关闭 wrapSentence
+        const sentenceWrapped = wrapSentence
+            ? `[^。！？!?；;:\n]*?(?:${pattern})[^。！？!?；;:\n]*?`
+            : pattern;
+        const regex = new RegExp(sentenceWrapped, 'g');
         let localCount = 0;
         let replacedAny = false;
         processed = processed.replace(regex, (match) => {
-            if (localCount >= 2) return match; // 控制每条高亮最多替换 2 处，避免碎片化
+            if (localCount >= 2) return match; // 控制每条高亮最多替换 2 处
             const token = `@@H${idx}_${tokenSeq++}@@`;
             mappings.push({ token, replacement: `<span class="${cls}">${match}</span>` });
             localCount++;
@@ -981,14 +985,16 @@ function processTextWithHighlights(text, highlights) {
             const dynamicThreshold = clean.length >= 12 ? 0.85 : 0.80;
             if (best.sent && best.score >= dynamicThreshold) {
                 const candPattern = escapeRegExp(best.sent).replace(/\s+/g, '\\s*');
-                matched = tryReplaceWithRegex(candPattern, cls, idx) || matched;
+                matched = tryReplaceWithRegex(candPattern, cls, idx, false) || matched; // 候选已是整句，无需再扩句
             }
         }
 
         // B) 若整句匹配不成功，尝试严格匹配（仅放宽空白差异）
         if (!matched) {
-            const strictPattern = escapeRegExp(clean).replace(/\s+/g, '\\s*');
-            matched = tryReplaceWithRegex(strictPattern, cls, idx);
+            const strictPattern = escapeRegExp(clean)
+                .replace(/\s+/g, '\\s*')
+                .replace(/["“”]/g, '[“”\"]?'); //   
+            matched = tryReplaceWithRegex(strictPattern, cls, idx, true);
         }
 
         // C) 最后兜底：仅当文本较长时才做片段匹配，避免碎片化
