@@ -52,7 +52,7 @@ const API_CONFIG = {
 
 // ==================== 提示词模板 ====================
 const PROMPTS = {
-    // Gemini 内容提炼提示词（采用 [R]/[B]/[G]/[Y] 内嵌标记主通道）
+    // Gemini 内容提炼提示词（采用 [R]/[G]/[Y] 内嵌标记主通道）
     CONTENT_EXTRACTION: `
 我们要做一份好看的时事资讯简报，请仔细阅读用户输入的新闻内容并做信息提炼，保持原文的框架结构，合理分割为2-6个子模块，提炼出文章标题、关键词和每个子模块的信息。注意，新闻内容中审校信息、评论点赞信息等无关信息，不用于提炼。
 
@@ -65,7 +65,7 @@ const PROMPTS = {
 3. 子模块内容：请在“mainText”字段中输出含内嵌标记的 Markdown 文本（单字段即可），并遵循以下“重点标记规则”：
    - 使用方括号标签标注重点（主通道）：
      - [R]…[/R] → 红色（red）：关键结论/重大变化/风险警示
-     - [B]…[/B] → 蓝色（blue）：重要人物/机构/专有名词
+
      - [G]…[/G] → 绿色（green）：关键数据（数值、单位、区间、同比环比、bp、百分号、日期区间等）
      - [Y]…[/Y] → 黄色（yellow）：重要现象/趋势/背景脉络
    - 约束：
@@ -76,14 +76,14 @@ const PROMPTS = {
      5）标记应包含句尾标点更自然。
    - 可保留普通 Markdown（标题/换行/列表等），但不要使用 ** 或 * 来强调重点（重点仅用方括号标签）。
 
-4. 引用与数据项（可选）：
-   - quotes：专家观点或官方声明的引用内容（可选）
-   - dataPoints：关键数字项清单（可选）
+4. 引用与数据项：
+   - quotes：若该模块提到了专家观点或官方声明，必须用 quotes 标识，并尽量将相关内容提炼到该字段（引用原话或清晰转述）。
+   - dataPoints：若该模块包含关键的经济数据或金融市场数据，尽量提炼为简洁条目，放入该字段（保持真实、标注单位/区间/同比环比等）。
 
 5. 子模块插图的提示词：根据模块内容撰写英文提示词（后续会调用其他模型生成插图）。
    模板：
    "A hand-drawn illustration of [some financial subject], featuring a line graph or chart showing [something], and using colored pencil style with blue, green, gold and red highlights. Add hand-drawn elements like [some icon] and [some sign]. Add annotations or labels in English like '[words or numbers]' if necessary. Keep a clean hand-drawn style suitable for a financial report. Attention, the background color must be #f5f2e8."
-   要求：提示词中的文字或数字必须真实来自原文。
+   要求：Annotations or labels MUST be in English only (no Chinese)。提示词中的文字或数字必须真实来自原文。
 
 ## JSON 输出格式：
 {
@@ -94,7 +94,9 @@ const PROMPTS = {
     {
       "sectionTitle": "子模块标题",
       "sectionContent": {
-        "mainText": "含 [R]/[B]/[G]/[Y] 内嵌标记的 Markdown 文本（不超过500字）",
+        "mainText": "含 [R]/[G]/[Y] 内嵌标记的 Markdown 文本（不超过500字）",
+        "quotes": ["专家观点或官方声明（如该模块有提到，必须提炼到此）"],
+        "dataPoints": ["关键经济/金融市场数据的要点条目（如有尽量提炼，标注单位/区间/同比环比等）"],
         "highlights": [] // 过渡期可留空或镜像 mainText 内的标记，前端不依赖此字段
       },
       "imagePrompt": "基于模板生成的英文插图提示词"
