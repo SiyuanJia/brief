@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Highlight Tag Render Tests</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; padding: 16px; }
+    .pass { color: #0a0; }
+    .fail { color: #c00; }
+    .case { margin-bottom: 16px; }
+    .result { font-weight: 600; }
+    .preview { padding: 8px 12px; background: #faf9f5; border: 1px solid #eee; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h2>Highlight Tag Render Tests</h2>
+  <div id="results"></div>
+
+  <script src="../script.js"></script>
+  <script>
+    const $ = (sel) => document.querySelector(sel);
+    const results = document.getElementById('results');
+
+    function assert(name, condition, details, previewHtml = '') {
+      const div = document.createElement('div');
+      div.className = 'case';
+      div.innerHTML = `<div class="result ${condition ? 'pass' : 'fail'}">${condition ? 'PASS' : 'FAIL'} - ${name}</div>` +
+        (details ? `<div>${details}</div>` : '') +
+        (previewHtml ? `<div class="preview">${previewHtml}</div>` : '');
+      results.appendChild(div);
+    }
+
+    function countByClass(html, cls) {
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      return div.querySelectorAll(`.${cls}`).length;
+    }
+
+    // Case 1: 正常标签
+    (function(){
+      const input = 'A [R]整句结论。[/R] B [G]降息1.25个百分点[/G] C [B]美联储[/B] D [Y]市场情绪转变[/Y]';
+      const out = window.renderTextWithBracketTags(input);
+      const ok = countByClass(out, 'highlight-red')===1 && countByClass(out, 'highlight-green')===1 &&
+                 countByClass(out, 'highlight-blue')===1 && countByClass(out, 'highlight-yellow')===1 &&
+                 out.includes('整句结论。') && out.includes('降息1.25个百分点');
+      assert('正常标签四色各一次', ok, '', out);
+    })();
+
+    // Case 2: 无标签，应输出纯文本且无高亮
+    (function(){
+      const input = '这是没有任何标签的文本 & <tag>';
+      const out = window.renderTextWithBracketTags(input);
+      const ok = countByClass(out, 'highlight')===0 && out.includes('&amp;') && out.includes('&lt;tag&gt;');
+      assert('无标签时正常转义且无高亮', ok, '', out);
+    })();
+
+    // Case 3: 坏标签（未闭合/交错），应尽量移除残留标签，保留可读文本
+    (function(){
+      const input = '前缀 [R]未闭合 中缀 [/B] 错位 [B]机构[/B] 尾部';
+      const out = window.renderTextWithBracketTags(input);
+      const ok = countByClass(out, 'highlight-blue')===1 && !out.includes('[R]') && !out.includes('[/B]');
+      assert('坏标签容错：移除残留标记，保留可读文本', ok, '', out);
+    })();
+  </script>
+</body>
+</html>
+

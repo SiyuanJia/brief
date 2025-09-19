@@ -918,6 +918,12 @@ function renderTextWithBracketTags(text = '') {
   return s;
 }
 
+// 暴露渲染函数供测试页面使用
+if (typeof window !== 'undefined') {
+  window.renderTextWithBracketTags = renderTextWithBracketTags;
+}
+
+
 
 // === 相似度辅助：归一化与编辑距离 ===
 function normalizeForSimilarity(s = '') {

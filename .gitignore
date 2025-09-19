@@ -92,6 +92,9 @@ tests/
 test_*.py
 *_test.js
 
+# Allow frontend snapshot test page
+!tests/highlight_tests.html
+
 # 其他项目特定文件
 handler.js
 handler.py
