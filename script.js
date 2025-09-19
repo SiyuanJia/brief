@@ -1459,7 +1459,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // 注意：目前只有 Unifuns 使用代理，Gemini 和 Nano Banana 暂时直连
     // 等后端 multi_handler.py 完善 Gemini/NB 代理后，可启用以下代码：
 
-    /*
     if (proxy) {
         // 将 Gemini 和 Nano Banana 的请求都指向统一代理
         API_CONFIG.GEMINI.endpoint = proxy + '?service=gemini';
@@ -1473,7 +1472,6 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log(`[环境] Gemini端点: ${API_CONFIG.GEMINI.endpoint}`);
         console.log(`[环境] NanoBanana端点: ${API_CONFIG.NANO_BANANA.endpoint}`);
     }
-    */
 
     console.log(`[环境] Gemini直连: ${API_CONFIG.GEMINI.endpoint}`);
     console.log(`[环境] NanoBanana直连: ${API_CONFIG.NANO_BANANA.endpoint}`);
