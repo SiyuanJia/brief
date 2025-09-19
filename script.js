@@ -52,48 +52,50 @@ const API_CONFIG = {
 
 // ==================== 提示词模板 ====================
 const PROMPTS = {
-    // Gemini 内容提炼提示词（优化版）
+    // Gemini 内容提炼提示词（采用 [R]/[B]/[G]/[Y] 内嵌标记主通道）
     CONTENT_EXTRACTION: `
 我们要做一份好看的时事资讯简报，请仔细阅读用户输入的新闻内容并做信息提炼，保持原文的框架结构，合理分割为2-6个子模块，提炼出文章标题、关键词和每个子模块的信息。注意，新闻内容中审校信息、评论点赞信息等无关信息，不用于提炼。
 
 ## 需要输出的内容如下：（用 JSON 格式返回）
 
-1. **文章标题及关键词**：如果原文有标题，则采用原标题；关键词根据新闻内容提炼 3-5 个即可。
+1. 文章标题及关键词：如果原文有标题，则采用原标题；关键词根据新闻内容提炼 3-5 个即可。
 
-2. **子模块标题**：如果原文可以分成相对独立的几个子模块，则提炼出模块标题。
+2. 子模块标题：如果原文可以分成相对独立的几个子模块，则提炼出模块标题。
 
-3. **子模块内容**：如果原文可以分成相对独立的几个子模块，则提炼出模块核心内容，并注意：
-   1）子模块内容不要超过 500 字，可以适当引用原文。
-   2）所有信息，尤其是关键数字，**一定要来自于原文、保证真实准确**，秉持严肃的新闻态度，不要编造。
-   3）提炼的内容中，重点的词语或句子，要标记为 highlights，简报中会用彩色加粗来突出。包括：关键数据、重要观点、核心结论、重要现象、重要人物/机构名称等，标记完整的语句，不要太细碎（注意，标记数量控制在每段3-8个重点）。
-   4）提炼的内容中，引用的内容，即如果涉及到某个段落是援引自某位专家或某个机构，要标记为 quotes，简报中会用引用的样式来突出。
-   5）提炼的内容中，如果涉及到关键数据，请列出对应的数据项描述，标记为 dataPoints，简报中会用无序列表来表示。
+3. 子模块内容：请在“mainText”字段中输出含内嵌标记的 Markdown 文本（单字段即可），并遵循以下“重点标记规则”：
+   - 使用方括号标签标注重点（主通道）：
+     - [R]…[/R] → 红色（red）：关键结论/重大变化/风险警示
+     - [B]…[/B] → 蓝色（blue）：重要人物/机构/专有名词
+     - [G]…[/G] → 绿色（green）：关键数据（数值、单位、区间、同比环比、bp、百分号、日期区间等）
+     - [Y]…[/Y] → 黄色（yellow）：重要现象/趋势/背景脉络
+   - 约束：
+     1）尽量整句标记；
+     2）数字/日期必须完整（含单位、小数点、百分号、bp、区间连字符、年月日）；
+     3）不允许嵌套或交错标记；
+     4）每段控制 3–5 个重点；
+     5）标记应包含句尾标点更自然。
+   - 可保留普通 Markdown（标题/换行/列表等），但不要使用 ** 或 * 来强调重点（重点仅用方括号标签）。
 
-4. **子模块插图的提示词**：根据模块内容，我们后续会调用其他模型接口，生成一张手绘风格插图，请你根据子模块的内容，撰写插图生成的提示词，注意：
-   1）插图生成提示词的模板：
+4. 引用与数据项（可选）：
+   - quotes：专家观点或官方声明的引用内容（可选）
+   - dataPoints：关键数字项清单（可选）
+
+5. 子模块插图的提示词：根据模块内容撰写英文提示词（后续会调用其他模型生成插图）。
+   模板：
    "A hand-drawn illustration of [some financial subject], featuring a line graph or chart showing [something], and using colored pencil style with blue, green, gold and red highlights. Add hand-drawn elements like [some icon] and [some sign]. Add annotations or labels in English like '[words or numbers]' if necessary. Keep a clean hand-drawn style suitable for a financial report. Attention, the background color must be #f5f2e8."
-
-   请依据此模板和该段落的内容，填充方括号内的内容，灵活生成适配的提示词。注意，提示词要用英文。
-   2）提示词中需要在插图展示出来的文字或数字，**一定要来自于原文、保证真实准确**，秉持严肃的新闻态度，不要编造。
+   要求：提示词中的文字或数字必须真实来自原文。
 
 ## JSON 输出格式：
 {
   "articleTitle": "文章标题（如果原文有标题则采用原标题）",
   "publishDate": "发布日期（格式：YYYY年MM月DD日，如无明确日期可用今日）",
-  "keywords": ["关键词1", "关键词2", "关键词3"], // 3-5个关键词
+  "keywords": ["关键词1", "关键词2", "关键词3"],
   "sections": [
     {
       "sectionTitle": "子模块标题",
       "sectionContent": {
-        "mainText": "主要内容段落（不超过500字）",
-        "highlights": [
-          {
-            "text": "重点内容文字（来自原文）",
-            "type": "red|blue|green|yellow"
-          }
-        ],
-        "quotes": ["专家观点或官方声明的引用内容"],
-        "dataPoints": ["具体数字、百分比或统计信息"]
+        "mainText": "含 [R]/[B]/[G]/[Y] 内嵌标记的 Markdown 文本（不超过500字）",
+        "highlights": [] // 过渡期可留空或镜像 mainText 内的标记，前端不依赖此字段
       },
       "imagePrompt": "基于模板生成的英文插图提示词"
     }
@@ -794,11 +796,9 @@ function createSectionElement(sectionData, index) {
     // 添加主要文本
     if (sectionData.sectionContent.mainText) {
         const mainPara = document.createElement('p');
-        const sanitized = sanitizeMarkdown(sectionData.sectionContent.mainText);
-        mainPara.innerHTML = processTextWithHighlights(
-            sanitized,
-            sectionData.sectionContent.highlights || []
-        );
+        const raw = sectionData.sectionContent.mainText;
+        // 新版：直接解析 mainText 中的 [R]/[B]/[G]/[Y] 标签进行渲染
+        mainPara.innerHTML = renderTextWithBracketTags(raw);
         content.appendChild(mainPara);
     }
 
@@ -892,6 +892,33 @@ function escapeRegExp(str = '') {
     return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// === 新：将 mainText 中的 [R]/[B]/[G]/[Y] 标签渲染为带颜色的高亮 ===
+function escapeHTMLBasic(s = '') {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function renderTextWithBracketTags(text = '') {
+  let s = String(text || '').replace(/\r\n/g, '\n');
+  // 1) 基础转义，防止注入；我们的方括号标签不受影响
+  s = escapeHTMLBasic(s);
+  // 2) 标签映射
+  const apply = (tag, cls) => {
+    const re = new RegExp(`\\[${tag}\\]([\\s\\S]*?)\\[\/${tag}\\]`, 'g');
+    s = s.replace(re, (_m, inner) => `<span class="highlight highlight-${cls}">${inner}</span>`);
+  };
+  apply('R', 'red');
+  apply('B', 'blue');
+  apply('G', 'green');
+  apply('Y', 'yellow');
+  // 3) 兜底：去除任何残留/不成对的标签
+  s = s.replace(/\[(?:\/)?(?:R|B|G|Y)\]/g, '');
+  return s;
+}
+
+
 // === 相似度辅助：归一化与编辑距离 ===
 function normalizeForSimilarity(s = '') {
   return String(s)
@@ -933,6 +960,8 @@ function similarityRatio(a = '', b = '') {
   return 1 - dist / maxLen;
 }
 
+
+// [LEGACY] 以下为历史遗留的“highlights 匹配 mainText”算法，现已停用；渲染改为解析 [R]/[B]/[G]/[Y] 内嵌标签
 
 // 处理文本中的高亮内容（占位符法，避免相互污染）
 function processTextWithHighlights(text, highlights) {
