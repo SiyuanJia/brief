@@ -1136,9 +1136,8 @@ function downloadImage() {
             console.log('图片生成成功，数据长度:', dataUrl.length);
 
             if (isMobile) {
-                // 移动端使用不同的下载方式
+                // 移动端：先尝试使用 a[download] 直接保存，失败则提示用户改用桌面或截屏
                 try {
-                    // 方式1：尝试直接下载
                     const link = document.createElement('a');
                     link.download = '财经时事资讯简报-' + new Date().toISOString().slice(0, 10) + '.png';
                     link.href = dataUrl;
@@ -1146,18 +1145,8 @@ function downloadImage() {
                     link.click();
                     document.body.removeChild(link);
                 } catch (e) {
-                    console.warn('移动端直接下载失败，尝试新窗口方式:', e);
-                    // 方式2：新窗口打开图片
-                    const newWindow = window.open();
-                    newWindow.document.write(`
-                        <html>
-                            <head><title>财经简报</title></head>
-                            <body style="margin:0;padding:20px;text-align:center;">
-                                <p>长按图片保存到相册</p>
-                                <img src="${dataUrl}" style="max-width:100%;height:auto;" alt="财经简报"/>
-                            </body>
-                        </html>
-                    `);
+                    console.warn('移动端下载失败:', e);
+                    alert('由于图片较大，请使用桌面浏览器下载，或者用截屏保存页面');
                 }
             } else {
                 // 桌面端使用标准下载方式
@@ -1170,105 +1159,21 @@ function downloadImage() {
         .catch(async function (error) {
             console.error('下载图片时出错:', error);
 
-            // 尝试兜底方案：html-to-image（按需动态加载，不引入 html2canvas）
-            try {
-                console.log('[fallback] 使用 html-to-image 重试...');
-                const { toPng } = await import('https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/+esm');
-                const htiOptions = {
-                    backgroundColor: '#f5f2e8',
-                    pixelRatio: isMobile ? 1 : (window.devicePixelRatio || 1),
-                    cacheBust: true,
-                    imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
-                    filter: (options && options.filter) ? options.filter : undefined,
-                    width: options.width,
-                    height: options.height,
-                    style: options.style
-                };
-                const dataUrl = await toPng(node, htiOptions);
-
-                const loadingDiv = document.getElementById('download-loading');
-                if (loadingDiv) loadingDiv.remove();
-
-                if (isMobile) {
-                    // 新窗口展示，长按保存
-                    const w = window.open('', '_blank');
-                    if (w) {
-                        w.document.write(`<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><title>财经简报</title></head><body style="margin:0;padding:20px;text-align:center;background:#f0f0f0"><div style="background:#fff;padding:12px;border-radius:8px;margin-bottom:12px;">长按下方图片保存到相册</div><img src="${dataUrl}" style="max-width:100%;height:auto;border-radius:8px;" alt="财经简报"/></body></html>`);
-                        w.document.close();
-                        return;
-                    }
-                } else {
-                    const link = document.createElement('a');
-                    link.download = '财经时事资讯简报-' + new Date().toISOString().slice(0, 10) + '.png';
-                    link.href = dataUrl;
-                    link.click();
-                    return;
-                }
-            } catch (fallbackErr) {
-                console.error('[fallback] html-to-image 也失败:', fallbackErr);
-                try {
-                    console.log('[fallback2] 使用 html2canvas 重试...');
-                    await new Promise((resolve, reject) => {
-                        if (window.html2canvas) return resolve();
-                        const s = document.createElement('script');
-                        s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
-                        s.onload = () => resolve();
-                        s.onerror = (e) => reject(e);
-                        document.head.appendChild(s);
-                    });
-
-                    const prevTransform = node.style.transform;
-                    const prevOrigin = node.style.transformOrigin;
-                    if (isMobile && scale < 1) {
-                        node.style.transform = `scale(${scale})`;
-                        node.style.transformOrigin = 'top left';
-                    }
-
-                    const canvas = await window.html2canvas(node, {
-                        backgroundColor: '#f5f2e8',
-                        scale: 1,
-                        useCORS: true,
-                        allowTaint: true,
-                        width: Math.round(actualWidth * (isMobile ? scale : 1)),
-                        height: Math.round(actualHeight * (isMobile ? scale : 1)),
-                        scrollX: 0,
-                        scrollY: 0
-                    });
-
-                    node.style.transform = prevTransform;
-                    node.style.transformOrigin = prevOrigin;
-
-                    const dataUrl = canvas.toDataURL('image/png', isMobile ? 0.7 : 0.92);
-
-                    const loadingDiv = document.getElementById('download-loading');
-                    if (loadingDiv) loadingDiv.remove();
-
-                    if (isMobile) {
-                        const w = window.open('', '_blank');
-                        if (w) {
-                            w.document.write(`<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><title>财经简报</title></head><body style="margin:0;padding:20px;text-align:center;background:#f0f0f0"><div style="background:#fff;padding:12px;border-radius:8px;margin-bottom:12px;">长按下方图片保存到相册</div><img src="${dataUrl}" style="max-width:100%;height:auto;border-radius:8px;" alt="财经简报"/></body></html>`);
-                            w.document.close();
-                            return;
-                        }
-                    } else {
-                        const link = document.createElement('a');
-                        link.download = '财经时事资讯简报-' + new Date().toISOString().slice(0, 10) + '.png';
-                        link.href = dataUrl;
-                        link.click();
-                        return;
-                    }
-                } catch (fb2Err) {
-                    console.error('[fallback2] html2canvas 也失败:', fb2Err);
-                }
-            }
-
+            // 简化策略：移动端失败直接提示使用桌面或截屏；PC 提示重试（不再进行库级兜底）
             if (isMobile) {
-                alert('移动端图片生成失败，建议：\n1. 尝试刷新页面后重试\n2. 使用桌面浏览器访问\n3. 截屏保存页面内容');
+                alert('由于图片较大，请使用桌面浏览器下载，或者用截屏保存页面');
+                return;
             } else {
                 alert('下载图片时出错，请重试');
+                return;
             }
+
+
+
         });
-}
+    }
+
+
 
 // ==================== 主要生成流程 ====================
 
