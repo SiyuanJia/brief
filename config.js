@@ -1,9 +1,6 @@
 // ==================== 示例文章配置 ====================
 const EXAMPLE_ARTICLES_CONFIG = [
-    {
-        title: "央行最新发布！8月两大重要金融指标均增8.8%，释放什么信号？",
-        url: "https://mp.weixin.qq.com/s/-FKe9tCDR-vZnUoin2ox-g"
-    },
+
     {
         title: "多地出台楼市新政！更有地方“一次性补助4万", 
         url: "https://mp.weixin.qq.com/s/UjIu4cIyvwqH6Sccfyg2qA"
